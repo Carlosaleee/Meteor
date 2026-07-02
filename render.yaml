@@ -4,18 +4,10 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     envVars:
-      - key: SPRING_DATASOURCE_HOST
+      - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: ondas-sp-db
-          property: host
-      - key: SPRING_DATASOURCE_PORT
-        fromDatabase:
-          name: ondas-sp-db
-          property: port
-      - key: SPRING_DATASOURCE_DBNAME
-        fromDatabase:
-          name: ondas-sp-db
-          property: databaseName
+          property: connectionString
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: ondas-sp-db
