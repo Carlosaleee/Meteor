@@ -59,4 +59,7 @@ export interface Spot {
   longitude: number;
   difficulty: string;
   waveType: string;
+  bestSeason: string;
+  tip: string;
+  region: string;
 }

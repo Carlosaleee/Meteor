@@ -10,5 +10,8 @@ public record SpotResponse(
         double latitude,
         double longitude,
         String difficulty,
-        String waveType
+        String waveType,
+        String bestSeason,
+        String tip,
+        String region
 ) {}

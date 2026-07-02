@@ -261,6 +261,46 @@ html.dark {
   border-width: 0;
 }
 
+/* Leaflet map fixes */
+.leaflet-container {
+  font-family: inherit;
+  border-radius: 0;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px !important;
+  font-family: inherit !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .leaflet-popup-tip {
+  background: #1f2937 !important;
+}
+
+.leaflet-popup-close-button {
+  font-size: 18px !important;
+  color: #9ca3af !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: #6b7280 !important;
+}
+
+.custom-marker, .user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

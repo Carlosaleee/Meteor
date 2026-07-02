@@ -13,11 +13,15 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SurfScoreService {
 
     private static final Logger log = LoggerFactory.getLogger(SurfScoreService.class);
+
+    private static final LocalTime DAYLIGHT_START = LocalTime.of(6, 0);
+    private static final LocalTime DAYLIGHT_END = LocalTime.of(18, 0);
 
     private final WeatherService weatherService;
     private final MarineService marineService;
@@ -25,6 +29,35 @@ public class SurfScoreService {
     public SurfScoreService(WeatherService weatherService, MarineService marineService) {
         this.weatherService = weatherService;
         this.marineService = marineService;
+    }
+
+    /**
+     * Filters waves to only daylight hours (6am-6pm) and returns them sorted
+     * by composite surf quality (best conditions first).
+     */
+    private List<WaveData> getDaylightWaves(List<WaveData> allWaves) {
+        return allWaves.stream()
+                .filter(w -> w.getForecastTime() != null
+                        && !w.getForecastTime().isBefore(DAYLIGHT_START)
+                        && !w.getForecastTime().isAfter(DAYLIGHT_END))
+                .sorted(Comparator.comparing((WaveData w) -> {
+                    BigDecimal waveH = w.getWaveHeight() != null ? w.getWaveHeight() : BigDecimal.ZERO;
+                    BigDecimal swellH = w.getSwellHeight() != null ? w.getSwellHeight() : BigDecimal.ZERO;
+                    BigDecimal period = w.getWavePeriod() != null ? w.getWavePeriod() : BigDecimal.ZERO;
+                    return waveH.add(swellH).add(period.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP));
+                }).reversed())
+                .toList();
+    }
+
+    /**
+     * Finds the best time to surf during daylight hours using composite scoring.
+     */
+    private LocalTime findBestSurfTime(List<WaveData> waves) {
+        List<WaveData> daylight = getDaylightWaves(waves);
+        if (daylight.isEmpty()) {
+            return LocalTime.NOON;
+        }
+        return daylight.get(0).getForecastTime();
     }
 
     public SurfScore calculateScore(LocalDate date) {
@@ -37,9 +70,9 @@ public class SurfScoreService {
             return new SurfScore(date, LocalTime.NOON, BigDecimal.ZERO, "Sem dados", "Dados de ondas indisponíveis");
         }
 
-        WaveData bestWave = waves.stream()
-                .max(Comparator.comparing(w -> w.getWaveHeight() != null ? w.getWaveHeight() : BigDecimal.ZERO))
-                .orElse(waves.get(0));
+        List<WaveData> daylightWaves = getDaylightWaves(waves);
+        WaveData bestWave = daylightWaves.isEmpty() ? waves.get(0) : daylightWaves.get(0);
+        LocalTime bestTime = findBestSurfTime(waves);
 
         BigDecimal waveScore = calculateWaveScore(bestWave);
         BigDecimal weatherScore = weather.map(w -> calculateWeatherScore(w.getWindSpeedMax(), w.getPrecipitationSum()))
@@ -54,13 +87,7 @@ public class SurfScoreService {
         String level = getLevel(totalScore);
         String recommendation = getRecommendation(totalScore, bestWave);
 
-        return new SurfScore(
-                date,
-                bestWave.getForecastTime(),
-                totalScore,
-                level,
-                recommendation
-        );
+        return new SurfScore(date, bestTime, totalScore, level, recommendation);
     }
 
     public SurfSummary generateSummary(LocalDate date) {
@@ -88,9 +115,8 @@ public class SurfScoreService {
         String waveSummary;
         String bestTime;
         if (!waves.isEmpty()) {
-            WaveData maxWave = waves.stream()
-                    .max(Comparator.comparing(w -> w.getWaveHeight() != null ? w.getWaveHeight() : BigDecimal.ZERO))
-                    .orElse(waves.get(0));
+            List<WaveData> daylightWaves = getDaylightWaves(waves);
+            WaveData maxWave = daylightWaves.isEmpty() ? waves.get(0) : daylightWaves.get(0);
 
             StringBuilder wsb = new StringBuilder();
             if (maxWave.getWaveHeight() != null) {
@@ -103,7 +129,8 @@ public class SurfScoreService {
                 wsb.append(". Swell de ").append(maxWave.getSwellHeight()).append("m");
             }
             waveSummary = wsb.toString();
-            bestTime = maxWave.getForecastTime() != null ? maxWave.getForecastTime().toString() + "h" : "Não definido";
+            LocalTime best = findBestSurfTime(waves);
+            bestTime = best != null ? best.toString() + "h" : "Não definido";
         } else {
             waveSummary = "Dados de ondas indisponíveis";
             bestTime = "Não disponível";
