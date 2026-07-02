@@ -1,3 +1,7 @@
+server:
+  address: 0.0.0.0
+  port: ${PORT:8080}
+
 spring:
   application:
     name: ondas-sp
@@ -36,6 +40,8 @@ spring:
       time-to-live: 600000
 
 app:
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
   external-apis:
     open-meteo:
       base-url: https://api.open-meteo.com

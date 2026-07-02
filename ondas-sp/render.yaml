@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: ondas-sp-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: ondas-sp-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: ondas-sp-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: ondas-sp-db
+          property: password
+      - key: SPRING_DATA_REDIS_HOST
+        fromService:
+          name: ondas-sp-redis
+          property: host
+      - key: SPRING_DATA_REDIS_PORT
+        fromService:
+          name: ondas-sp-redis
+          property: port
+      - key: APP_CORS_ORIGINS
+        sync: false
+      - key: JAVA_VERSION
+        value: 21
+
+databases:
+  - name: ondas-sp-db
+    plan: free
+    databaseName: ondassp
+    ipAllowList: []
+
+  - name: ondas-sp-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
