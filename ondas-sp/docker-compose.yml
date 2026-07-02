@@ -1,0 +1,79 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ondas-sp-api
+    ports:
+      - '8080:8080'
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ondassp
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      OPEN_METEO_API_URL: https://api.open-meteo.com
+      STORMGLASS_API_URL: https://api.stormglass.io
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ondas-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ondas-sp-frontend
+    ports:
+      - '3000:80'
+    depends_on:
+      - api
+    networks:
+      - ondas-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ondas-sp-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: ondassp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ondas-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: ondas-sp-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ondas-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  ondas-net:
+    driver: bridge
