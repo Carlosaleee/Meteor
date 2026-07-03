@@ -4,18 +4,18 @@ import { Hero } from '../components/Hero';
 import { WeatherCard } from '../components/WeatherCard';
 import { WaveCard } from '../components/WaveCard';
 import { SurfSummaryCard } from '../components/SurfSummaryCard';
-import { SurfScoreCard } from '../components/SurfScoreCard';
-import { ForecastTable } from '../components/ForecastTable';
 import { WaveChart } from '../components/WaveChart';
 import { SpotMap } from '../components/SpotMap';
 import { KpiCards } from '../components/KpiCards';
 import { AlertsPanel } from '../components/AlertsPanel';
 import { Footer } from '../components/Footer';
 import { WindDetailCard } from '../components/WindDetailCard';
+import { HourlyForecast } from '../components/HourlyForecast';
+import { TideCard } from '../components/TideCard';
+import { WindSessionCard } from '../components/WindSessionCard';
 import { useWeather } from '../hooks/useWeather';
 import { useWaves } from '../hooks/useWaves';
 import { useSurfSummary } from '../hooks/useSurfSummary';
-import { useSurfScore } from '../hooks/useSurfScore';
 import { useSpots } from '../hooks/useSpots';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { Waves, AlertCircle, MapPin, Crosshair, Navigation, ChevronRight } from 'lucide-react';
@@ -25,7 +25,6 @@ export function Dashboard() {
   const { weather, loading: wL, error: wE } = useWeather();
   const { waves, loading: wvL, error: wvE } = useWaves();
   const { summary, loading: smL } = useSurfSummary();
-  const { score } = useSurfScore();
   const { spots } = useSpots();
   const { position: userPosition, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
 
@@ -75,6 +74,36 @@ export function Dashboard() {
       />
 
       <main id="main-content" className="max-w-7xl mx-auto px-4 py-8" role="main" aria-label="Conteúdo principal">
+        {/* KPI Cards — logo abaixo do header */}
+        {!loading && (
+          <div className="mb-6 animate-fadeIn">
+            <KpiCards weather={weather} waves={waves} />
+          </div>
+        )}
+
+        {/* Hourly Forecast */}
+        {!loading && waves.length > 0 && (
+          <HourlyForecast
+            weather={weather}
+            waves={waves}
+          />
+        )}
+
+        {/* Main cards — logo abaixo da Visão Geral */}
+        {!loading && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {weather ? (
+              <div className="animate-scaleIn flex"><WeatherCard data={weather} /></div>
+            ) : (
+              <EmptyCard title="Previsão do Tempo" icon="🌤️" />
+            )}
+            <div className="animate-scaleIn flex" style={{ animationDelay: '0.05s' }}><WaveCard data={waves} /></div>
+            <div className="animate-scaleIn flex" style={{ animationDelay: '0.1s' }}>
+              <WindDetailCard weather={weather} />
+            </div>
+          </div>
+        )}
+
         {hasError && (
           <div className="mb-6 p-4 glass-card rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
@@ -220,13 +249,6 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* KPI Cards */}
-        {!loading && (
-          <div className="mb-6 animate-fadeIn">
-            <KpiCards weather={weather} waves={waves} />
-          </div>
-        )}
-
         {/* Alerts Panel */}
         {!loading && summary && (
           <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
@@ -234,25 +256,17 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Surf Score */}
-        {!loading && score && (
+        {/* Wind Session Card */}
+        {!loading && (
           <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.12s' }}>
-            <SurfScoreCard data={score} />
+            <WindSessionCard weather={weather} />
           </div>
         )}
 
-        {/* Main cards */}
-        {!loading && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {weather ? (
-              <div className="animate-scaleIn flex"><WeatherCard data={weather} /></div>
-            ) : (
-              <EmptyCard title="Previsão do Tempo" icon="🌤️" />
-            )}
-            <div className="animate-scaleIn flex" style={{ animationDelay: '0.05s' }}><WaveCard data={waves} /></div>
-            <div className="animate-scaleIn flex" style={{ animationDelay: '0.1s' }}>
-              <WindDetailCard weather={weather} />
-            </div>
+        {/* Tide Card — logo abaixo do Score */}
+        {!loading && waves.length > 0 && (
+          <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.13s' }}>
+            <TideCard waves={waves} />
           </div>
         )}
 
@@ -267,13 +281,6 @@ export function Dashboard() {
         {!loading && waves.length > 0 && (
           <div className="mb-6 animate-fadeIn">
             <WaveChart data={waves} />
-          </div>
-        )}
-
-        {/* Detailed Forecast Table */}
-        {!loading && waves.length > 0 && (
-          <div className="mb-6 animate-fadeIn">
-            <ForecastTable weather={weather} waves={waves} />
           </div>
         )}
 

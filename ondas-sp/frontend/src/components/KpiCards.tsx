@@ -32,55 +32,55 @@ export function KpiCards({ weather, waves }: Props) {
 
   const kpis = [
     {
-      icon: <Thermometer className="w-5 h-5 text-red-400" />,
+      icon: <Thermometer className="w-5 h-5" />,
       label: 'Temperatura Máx',
       value: weather?.temperatureMax != null ? `${weather.temperatureMax}°` : '--',
-      color: 'from-red-500/20 to-orange-500/20',
+      color: 'from-red-600 to-orange-700',
     },
     {
-      icon: <Thermometer className="w-5 h-5 text-blue-400" />,
+      icon: <Thermometer className="w-5 h-5" />,
       label: 'Temperatura Mín',
       value: weather?.temperatureMin != null ? `${weather.temperatureMin}°` : '--',
-      color: 'from-blue-500/20 to-cyan-500/20',
+      color: 'from-blue-600 to-cyan-700',
     },
     {
-      icon: <Waves className="w-5 h-5 text-ocean-400" />,
+      icon: <Waves className="w-5 h-5" />,
       label: 'Altura Onda',
       value: latestWave?.waveHeight != null ? `${latestWave.waveHeight}m` : '--',
-      color: 'from-ocean-500/20 to-cyan-500/20',
+      color: 'from-teal-600 to-cyan-700',
     },
     {
-      icon: <Clock className="w-5 h-5 text-purple-400" />,
+      icon: <Clock className="w-5 h-5" />,
       label: 'Período',
       value: latestWave?.wavePeriod != null ? `${latestWave.wavePeriod}s` : '--',
-      color: 'from-purple-500/20 to-pink-500/20',
+      color: 'from-purple-600 to-pink-700',
     },
     {
-      icon: <Anchor className="w-5 h-5 text-indigo-400" />,
+      icon: <Anchor className="w-5 h-5" />,
       label: 'Swell',
       value: latestWave?.swellHeight != null ? `${latestWave.swellHeight}m` : '--',
       sublabel: latestWave ? `${getSwellDirection(latestWave.swellDirection)} · ${latestWave.swellPeriod || '--'}s` : '',
-      color: 'from-indigo-500/20 to-violet-500/20',
+      color: 'from-indigo-600 to-violet-700',
     },
     {
-      icon: <Wind className="w-5 h-5 text-teal-400" />,
+      icon: <Wind className="w-5 h-5" />,
       label: 'Vento',
       value: weather?.windSpeedMax != null ? `${weather.windSpeedMax} km/h` : '--',
       sublabel: weather ? getWindDirection(weather.windDirection) : '',
-      color: 'from-teal-500/20 to-green-500/20',
+      color: 'from-teal-600 to-green-700',
     },
     {
-      icon: <Droplets className="w-5 h-5 text-blue-300" />,
+      icon: <Droplets className="w-5 h-5" />,
       label: 'Umidade',
       value: weather?.humidity != null ? `${weather.humidity}%` : '--',
-      color: 'from-blue-400/20 to-cyan-400/20',
+      color: 'from-blue-500 to-cyan-600',
     },
     {
-      icon: <Sun className="w-5 h-5 text-yellow-400" />,
+      icon: <Sun className="w-5 h-5" />,
       label: 'UV',
       value: weather?.uvIndex != null ? `${weather.uvIndex}` : '--',
       sublabel: uv.text,
-      color: 'from-yellow-500/20 to-amber-500/20',
+      color: 'from-yellow-600 to-amber-700',
     },
   ];
 
@@ -91,15 +91,15 @@ export function KpiCards({ weather, waves }: Props) {
           key={kpi.label}
           role="status"
           aria-label={`${kpi.label}: ${kpi.value}${kpi.sublabel ? ', ' + kpi.sublabel : ''}`}
-          className={`glass-card rounded-xl p-4 hover:scale-[1.03] transition-all duration-300 group bg-gradient-to-br ${kpi.color}`}
+          className={`rounded-xl p-4 hover:scale-[1.03] transition-all duration-300 group bg-gradient-to-br ${kpi.color} shadow-lg`}
         >
           <div className="flex items-center gap-2 mb-2">
-            <div className="group-hover:scale-110 transition-transform duration-300">{kpi.icon}</div>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate">{kpi.label}</p>
+            <div className="text-white/80 group-hover:scale-110 transition-transform duration-300">{kpi.icon}</div>
+            <p className="text-[10px] text-white/70 uppercase tracking-wider truncate">{kpi.label}</p>
           </div>
-          <p className="text-lg sm:text-xl font-extrabold text-gray-800 dark:text-white">{kpi.value}</p>
+          <p className="text-lg sm:text-xl font-extrabold text-white">{kpi.value}</p>
           {kpi.sublabel && (
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{kpi.sublabel}</p>
+            <p className="text-[10px] text-white/60 mt-0.5">{kpi.sublabel}</p>
           )}
         </div>
       ))}

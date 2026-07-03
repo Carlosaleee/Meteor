@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import type { WeatherData, WaveData } from '../types';
-import { Thermometer, Waves, Wind, Sun, Moon, Clock } from 'lucide-react';
+import { Thermometer, Waves, Wind, Sun, Moon, Calendar, Map } from 'lucide-react';
 
 interface Props {
   weather: WeatherData | null;
@@ -37,7 +38,7 @@ export function Hero({ weather, waves, dark, onToggleDark }: Props) {
   const temp = weather?.temperatureMean;
   const waveHeight = latestWave?.waveHeight;
   const windSpeed = weather?.windSpeedMax;
-  const timeStr = time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = time.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return (
     <header role="banner" aria-label="Cabeçalho principal com previsão do tempo" className="relative overflow-hidden bg-gradient-to-br from-ocean-800 via-ocean-600 to-cyan-500 text-white">
@@ -88,6 +89,13 @@ export function Hero({ weather, waves, dark, onToggleDark }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              to="/meteorologia"
+              className="flex items-center gap-2 px-3 py-2 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition-all duration-200 backdrop-blur-sm text-sm font-medium border border-amber-400/30"
+            >
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Meteorologia Nacional</span>
+            </Link>
             <button
               onClick={onToggleDark}
               aria-label={dark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
@@ -119,9 +127,9 @@ export function Hero({ weather, waves, dark, onToggleDark }: Props) {
             sublabel={windSpeed != null ? `km/h ${getWindDirection(weather?.windDirection ?? null)}` : ''}
           />
           <HeroKpi
-            icon={<Clock className="w-6 h-6" />}
-            label="Horário"
-            value={timeStr}
+            icon={<Calendar className="w-6 h-6" />}
+            label="Data"
+            value={dateStr}
             sublabel="Ilha Comprida, SP"
           />
         </div>
