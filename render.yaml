@@ -30,16 +30,15 @@ services:
         value: "https://ondas-sp.onrender.com,https://ondas-sp-frontend.onrender.com"
       - key: JAVA_VERSION
         value: 21
-      - key: PORT
-        value: 8080
+
+  - type: redis
+    name: ondas-sp-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
 
 databases:
   - name: ondas-sp-db
     plan: free
     databaseName: ondassp
     ipAllowList: []
-
-  - name: ondas-sp-redis
-    plan: free
-    ipAllowList: []
-    maxmemoryPolicy: allkeys-lru
