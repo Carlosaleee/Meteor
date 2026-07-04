@@ -1,6 +1,8 @@
 package com.meteor.ondassp.infrastructure.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,8 @@ public class StormglassClient {
         this.objectMapper = objectMapper;
     }
 
+    @CircuitBreaker(name = "stormglass", fallbackMethod = "getWaveForecastFallback")
+    @Retry(name = "stormglass")
     public List<WaveForecast> getWaveForecast(LocalDate date) {
         String url = String.format(
                 "https://marine-api.open-meteo.com/v1/marine?latitude=%s&longitude=%s&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,wind_wave_period&timezone=America/Sao_Paulo&start_date=%s&end_date=%s",
@@ -98,6 +102,11 @@ public class StormglassClient {
             return BigDecimal.valueOf(list.get(index));
         }
         return null;
+    }
+
+    public List<WaveForecast> getWaveForecastFallback(LocalDate date, Throwable t) {
+        log.warn("Fallback for Stormglass: {}", t.getMessage());
+        return List.of();
     }
 
     public record WaveForecast(

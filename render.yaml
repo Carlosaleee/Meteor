@@ -25,7 +25,9 @@ services:
           name: ondas-sp-redis
           property: port
       - key: APP_CORS_ORIGINS
-        sync: false
+        value: "https://ondas-sp.onrender.com,https://ondas-sp-frontend.onrender.com"
+      - key: APP_CORS_ALLOWED-METHODS
+        value: "GET,POST,OPTIONS"
       - key: JAVA_VERSION
         value: 21
 

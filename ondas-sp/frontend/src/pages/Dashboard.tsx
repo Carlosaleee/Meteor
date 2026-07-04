@@ -1,64 +1,51 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Hero } from '../components/Hero';
-import { WeatherCard } from '../components/WeatherCard';
-import { WaveCard } from '../components/WaveCard';
-import { SurfSummaryCard } from '../components/SurfSummaryCard';
-import { WaveChart } from '../components/WaveChart';
-import { SpotMap } from '../components/SpotMap';
-import { KpiCards } from '../components/KpiCards';
-import { AlertsPanel } from '../components/AlertsPanel';
-import { Footer } from '../components/Footer';
-import { WindDetailCard } from '../components/WindDetailCard';
-import { HourlyForecast } from '../components/HourlyForecast';
-import { TideCard } from '../components/TideCard';
-import { WindSessionCard } from '../components/WindSessionCard';
-import { useWeather } from '../hooks/useWeather';
-import { useWaves } from '../hooks/useWaves';
-import { useSurfSummary } from '../hooks/useSurfSummary';
-import { useSpots } from '../hooks/useSpots';
-import { useGeolocation } from '../hooks/useGeolocation';
-import { Waves, AlertCircle, MapPin, Crosshair, Navigation, ChevronRight } from 'lucide-react';
-import type { Spot } from '../types';
+import { useState, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import { Hero } from '../components/Hero'
+import { WeatherCard } from '../components/WeatherCard'
+import { WaveCard } from '../components/WaveCard'
+import { SurfSummaryCard } from '../components/SurfSummaryCard'
+import { WaveChart } from '../components/WaveChart'
+import { SpotMap } from '../components/SpotMap'
+import { KpiCards } from '../components/KpiCards'
+import { AlertsPanel } from '../components/AlertsPanel'
+import { Footer } from '../components/Footer'
+import { WindDetailCard } from '../components/WindDetailCard'
+import { HourlyForecast } from '../components/HourlyForecast'
+import { TideCard } from '../components/TideCard'
+import { WindSessionCard } from '../components/WindSessionCard'
+import { SpotCard } from '../components/SpotCard'
+import { ErrorBoundary } from '../components/ErrorBoundary'
+import { useWeather } from '../hooks/useWeather'
+import { useWaves } from '../hooks/useWaves'
+import { useSurfSummary } from '../hooks/useSurfSummary'
+import { useSpots } from '../hooks/useSpots'
+import { useGeolocation } from '../hooks/useGeolocation'
+import { useDarkMode } from '../hooks/useDarkMode'
+import { Waves, AlertCircle, MapPin, Crosshair, ChevronRight } from 'lucide-react'
+import type { Spot } from '../types'
 
 export function Dashboard() {
-  const { weather, loading: wL, error: wE } = useWeather();
-  const { waves, loading: wvL, error: wvE } = useWaves();
-  const { summary, loading: smL } = useSurfSummary();
-  const { spots } = useSpots();
-  const { position: userPosition, loading: geoLoading, error: geoError, requestLocation } = useGeolocation();
+  const { weather, loading: wL, error: wE } = useWeather()
+  const { waves, loading: wvL, error: wvE } = useWaves()
+  const { summary, loading: smL } = useSurfSummary()
+  const { spots } = useSpots()
+  const { position: userPosition, loading: geoLoading, error: geoError, requestLocation } = useGeolocation()
+  const { dark, toggle: toggleDark } = useDarkMode()
 
-  const [activeSpotId, setActiveSpotId] = useState<string | null>(null);
-  const spotCardsRef = useRef<HTMLDivElement>(null);
+  const [activeSpotId, setActiveSpotId] = useState<string | null>(null)
+  const spotCardsRef = useRef<HTMLDivElement>(null)
 
-  const [dark, setDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' ||
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
+  const loading = wL || wvL || smL
+  const hasError = wE || wvE
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-  }, [dark]);
+  const handleSpotHover = useCallback((spotId: string | null) => {
+    setActiveSpotId(spotId)
+  }, [])
 
-  const loading = wL || wvL || smL;
-  const hasError = wE || wvE;
-
-  const handleSpotHover = (spotId: string | null) => {
-    setActiveSpotId(spotId);
-  };
-
-  const handleSpotClick = (spot: Spot) => {
-    setActiveSpotId(spot.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleCardHover = (spotId: string | null) => {
-    setActiveSpotId(spotId);
-  };
+  const handleSpotClick = useCallback((spot: Spot) => {
+    setActiveSpotId(spot.id)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-cyan-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 transition-colors duration-500">
@@ -70,18 +57,16 @@ export function Dashboard() {
         weather={weather}
         waves={waves}
         dark={dark}
-        onToggleDark={() => setDark(!dark)}
+        onToggleDark={toggleDark}
       />
 
       <main id="main-content" className="max-w-7xl mx-auto px-4 py-8" role="main" aria-label="Conteúdo principal">
-        {/* KPI Cards — logo abaixo do header */}
         {!loading && (
           <div className="mb-6 animate-fadeIn">
             <KpiCards weather={weather} waves={waves} />
           </div>
         )}
 
-        {/* Hourly Forecast */}
         {!loading && waves.length > 0 && (
           <HourlyForecast
             weather={weather}
@@ -89,18 +74,23 @@ export function Dashboard() {
           />
         )}
 
-        {/* Main cards — logo abaixo da Visão Geral */}
         {!loading && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {weather ? (
-              <div className="animate-scaleIn flex"><WeatherCard data={weather} /></div>
+              <ErrorBoundary>
+                <div className="animate-scaleIn flex"><WeatherCard data={weather} /></div>
+              </ErrorBoundary>
             ) : (
               <EmptyCard title="Previsão do Tempo" icon="🌤️" />
             )}
-            <div className="animate-scaleIn flex" style={{ animationDelay: '0.05s' }}><WaveCard data={waves} /></div>
-            <div className="animate-scaleIn flex" style={{ animationDelay: '0.1s' }}>
-              <WindDetailCard weather={weather} />
-            </div>
+            <ErrorBoundary>
+              <div className="animate-scaleIn flex" style={{ animationDelay: '0.05s' }}><WaveCard data={waves} /></div>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <div className="animate-scaleIn flex" style={{ animationDelay: '0.1s' }}>
+                <WindDetailCard weather={weather} />
+              </div>
+            </ErrorBoundary>
           </div>
         )}
 
@@ -138,17 +128,17 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Spot Map + Geolocation */}
         {!loading && spots.length > 0 && (
           <div className="mb-6 animate-fadeIn">
-            <SpotMap
-              spots={spots}
-              activeSpotId={activeSpotId}
-              onSpotHover={handleSpotHover}
-              onSpotClick={handleSpotClick}
-              userPosition={userPosition}
-            />
-            {/* Geolocation button */}
+            <ErrorBoundary>
+              <SpotMap
+                spots={spots}
+                activeSpotId={activeSpotId}
+                onSpotHover={handleSpotHover}
+                onSpotClick={handleSpotClick}
+                userPosition={userPosition}
+              />
+            </ErrorBoundary>
             <div className="mt-3 flex items-center gap-3">
               <button
                 onClick={requestLocation}
@@ -165,7 +155,6 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Spot Cards — logo abaixo do mapa */}
         {!loading && spots.length > 0 && (
           <div className="mb-8 animate-fadeIn" style={{ animationDelay: '0.05s' }}>
             <div className="flex items-center justify-between mb-4">
@@ -181,59 +170,16 @@ export function Dashboard() {
               </Link>
             </div>
             <div ref={spotCardsRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {spots.slice(0, 8).map((spot, index) => {
-                const directionsUrl = userPosition
-                  ? `https://www.google.com/maps/dir/${userPosition[0]},${userPosition[1]}/${spot.latitude},${spot.longitude}`
-                  : `https://www.google.com/maps/dir/?api=1&destination=${spot.latitude},${spot.longitude}`;
-
-                const difficultyConfig: Record<string, { gradient: string; emoji: string }> = {
-                  'Iniciante': { gradient: 'from-emerald-400 to-teal-500', emoji: '🟢' },
-                  'Intermediário': { gradient: 'from-amber-400 to-orange-500', emoji: '🟡' },
-                  'Avançado': { gradient: 'from-rose-400 to-red-500', emoji: '🔴' },
-                };
-                const config = difficultyConfig[spot.difficulty] || difficultyConfig['Iniciante'];
-
-                return (
-                  <div key={spot.id} data-spot-id={spot.id}
-                    onClick={() => handleSpotClick(spot)}
-                    onMouseEnter={() => handleCardHover(spot.id)}
-                    onMouseLeave={() => handleCardHover(null)}
-                    className={`group relative rounded-xl overflow-hidden transition-all duration-300 cursor-pointer ${
-                      activeSpotId === spot.id
-                        ? 'ring-2 ring-ocean-400 dark:ring-ocean-500 scale-[1.02] shadow-lg'
-                        : 'hover:scale-[1.02] hover:shadow-lg'
-                    }`}
-                    style={{ animationDelay: `${index * 0.05}s` }}>
-
-                    {/* Mini gradient header */}
-                    <div className={`h-1.5 bg-gradient-to-r ${config.gradient}`} />
-
-                    <div className="p-3 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm">
-                      <div className="flex items-start gap-2.5">
-                        <div className={`p-1.5 rounded-lg bg-gradient-to-br ${config.gradient} shrink-0`}>
-                          <MapPin className="w-3.5 h-3.5 text-white" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-gray-800 dark:text-white truncate">{spot.name}</p>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[10px] font-semibold">{config.emoji} {spot.difficulty}</span>
-                            <span className="text-gray-300 dark:text-gray-600">·</span>
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500">{spot.waveType}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-2.5 flex gap-1.5">
-                        <a href={directionsUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
-                          className="flex-1 flex items-center justify-center gap-1 text-[10px] font-semibold text-ocean-600 dark:text-ocean-400 hover:text-ocean-700 dark:hover:text-ocean-300 bg-ocean-50 dark:bg-ocean-900/30 hover:bg-ocean-100 dark:hover:bg-ocean-900/50 px-2 py-1.5 rounded-lg transition-colors">
-                          <Navigation className="w-3 h-3" />
-                          Como chegar
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {spots.slice(0, 8).map((spot) => (
+                <SpotCard
+                  key={spot.id}
+                  spot={spot}
+                  isActive={activeSpotId === spot.id}
+                  userPosition={userPosition}
+                  onHover={handleSpotHover}
+                  onClick={handleSpotClick}
+                />
+              ))}
             </div>
 
             {spots.length > 8 && (
@@ -249,42 +195,46 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Alerts Panel */}
         {!loading && summary && (
           <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-            <AlertsPanel summary={summary} />
+            <ErrorBoundary>
+              <AlertsPanel summary={summary} />
+            </ErrorBoundary>
           </div>
         )}
 
-        {/* Wind Session Card */}
         {!loading && (
           <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.12s' }}>
-            <WindSessionCard weather={weather} />
+            <ErrorBoundary>
+              <WindSessionCard weather={weather} />
+            </ErrorBoundary>
           </div>
         )}
 
-        {/* Tide Card — logo abaixo do Score */}
         {!loading && waves.length > 0 && (
           <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.13s' }}>
-            <TideCard waves={waves} />
+            <ErrorBoundary>
+              <TideCard waves={waves} />
+            </ErrorBoundary>
           </div>
         )}
 
-        {/* Surf Summary */}
         {!loading && summary && (
           <div className="mb-6 animate-fadeIn" style={{ animationDelay: '0.15s' }}>
-            <SurfSummaryCard data={summary} />
+            <ErrorBoundary>
+              <SurfSummaryCard data={summary} />
+            </ErrorBoundary>
           </div>
         )}
 
-        {/* Wave chart */}
         {!loading && waves.length > 0 && (
           <div className="mb-6 animate-fadeIn">
-            <WaveChart data={waves} />
+            <ErrorBoundary>
+              <WaveChart data={waves} />
+            </ErrorBoundary>
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && !weather && waves.length === 0 && !summary && (
           <div className="text-center py-20">
             <Waves className="w-20 h-20 text-ocean-300 dark:text-ocean-600 mx-auto mb-6 animate-bounce" style={{ animationDuration: '3s' }} />
@@ -298,7 +248,7 @@ export function Dashboard() {
 
       <Footer />
     </div>
-  );
+  )
 }
 
 function EmptyCard({ title, icon }: { title: string; icon: string }) {
@@ -310,5 +260,5 @@ function EmptyCard({ title, icon }: { title: string; icon: string }) {
         <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Sem dados disponíveis</p>
       </div>
     </div>
-  );
+  )
 }

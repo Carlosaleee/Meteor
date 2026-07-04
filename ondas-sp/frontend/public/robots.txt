@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ondas-sp.onrender.com/sitemap.xml

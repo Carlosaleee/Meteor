@@ -70,7 +70,6 @@ public class WeatherService {
         log.info("Weather synchronization completed");
     }
 
-    @Cacheable(value = "weather-current", key = "'today'")
     public Optional<WeatherData> getCurrentWeather() {
         return weatherDataRepository.findTopByForecastDateOrderByFetchedAtDesc(LocalDate.now());
     }

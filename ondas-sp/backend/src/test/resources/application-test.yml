@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:16-alpine:///ondassp
+    username: test
+    password: test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  flyway:
+    enabled: true
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+
+logging:
+  level:
+    com.meteor.ondassp: DEBUG
+    org.springframework.test: INFO

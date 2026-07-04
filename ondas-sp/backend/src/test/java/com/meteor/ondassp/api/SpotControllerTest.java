@@ -20,8 +20,8 @@ class SpotControllerTest {
     void shouldReturnListOfSpots() throws Exception {
         mockMvc.perform(get("/api/spots"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(4))
-                .andExpect(jsonPath("$[0].id").value("ilha-comprida-centro"))
+                .andExpect(jsonPath("$.length()").value(14))
+                .andExpect(jsonPath("$[0].id").isNotEmpty())
                 .andExpect(jsonPath("$[0].name").isNotEmpty())
                 .andExpect(jsonPath("$[0].latitude").isNumber())
                 .andExpect(jsonPath("$[0].longitude").isNumber())
@@ -33,8 +33,8 @@ class SpotControllerTest {
     void shouldContainIlhaCompridaSpots() throws Exception {
         mockMvc.perform(get("/api/spots"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.id == 'ilha-comprida-centro')]").isArray())
-                .andExpect(jsonPath("$[?(@.id == 'ilha-comprida-norte')]").isArray())
-                .andExpect(jsonPath("$[?(@.id == 'ilha-comprida-boqueirão')]").isArray());
+                .andExpect(jsonPath("$[?(@.id == 'pedrinhas')]").isArray())
+                .andExpect(jsonPath("$[?(@.id == 'juruvauva')]").isArray())
+                .andExpect(jsonPath("$[?(@.id == 'trailer-parada-do-surf')]").isArray());
     }
 }

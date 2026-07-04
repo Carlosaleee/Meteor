@@ -2,6 +2,8 @@ package com.meteor.ondassp.infrastructure.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,12 +34,14 @@ public class OpenMeteoClient {
 
     public OpenMeteoClient(ObjectMapper objectMapper) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10000);
+        factory.setConnectTimeout(15000);
         factory.setReadTimeout(30000);
         this.restTemplate = new RestTemplate(factory);
         this.objectMapper = objectMapper;
     }
 
+    @CircuitBreaker(name = "openMeteo", fallbackMethod = "getDailyForecastFallback")
+    @Retry(name = "openMeteo")
     public List<DailyForecast> getDailyForecast(LocalDate date) {
         String url = String.format(
                 "%s/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,cloud_cover_mean,relative_humidity_2m_mean,uv_index_max,weather_code&timezone=America/Sao_Paulo&forecast_days=7",
@@ -82,7 +87,58 @@ public class OpenMeteoClient {
             log.info("Successfully fetched {} daily forecasts", forecasts.size());
             return forecasts;
         } catch (Exception e) {
-            log.error("Error fetching Open-Meteo data", e);
+            log.warn("Open-Meteo failed, trying wttr.in fallback: {}", e.getMessage());
+            return fetchFromWttrIn(date);
+        }
+    }
+
+    private List<DailyForecast> fetchFromWttrIn(LocalDate date) {
+        try {
+            String url = "https://wttr.in/Ilha+Comprida,SP?format=j1";
+            String response = restTemplate.getForObject(url, String.class);
+            Map<String, Object> json = objectMapper.readValue(response, Map.class);
+            Map<String, Object> currentCondition = (Map<String, Object>) ((List<?>) json.get("current_condition")).get(0);
+            List<Map<String, Object>> weather = (List<Map<String, Object>>) json.get("weather");
+
+            List<DailyForecast> forecasts = new ArrayList<>();
+            for (int i = 0; i < Math.min(7, weather.size()); i++) {
+                Map<String, Object> day = weather.get(i);
+                List<Map<String, Object>> hourly = (List<Map<String, Object>>) day.get("hourly");
+
+                double maxTemp = 0, minTemp = 999, totalWind = 0, totalHumidity = 0;
+                int count = 0;
+
+                for (Map<String, Object> h : hourly) {
+                    double temp = Double.parseDouble(h.get("tempC").toString());
+                    double wind = Double.parseDouble(h.get("windspeedKmph").toString());
+                    double hum = Double.parseDouble(h.get("humidity").toString());
+                    maxTemp = Math.max(maxTemp, temp);
+                    minTemp = Math.min(minTemp, temp);
+                    totalWind += wind;
+                    totalHumidity += hum;
+                    count++;
+                }
+
+                String forecastDate = LocalDate.now().plusDays(i).toString();
+                forecasts.add(new DailyForecast(
+                        forecastDate,
+                        BigDecimal.valueOf(maxTemp),
+                        BigDecimal.valueOf(minTemp),
+                        BigDecimal.valueOf((maxTemp + minTemp) / 2),
+                        BigDecimal.ZERO,
+                        BigDecimal.valueOf(totalWind / count),
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        BigDecimal.valueOf(totalHumidity / count),
+                        BigDecimal.ZERO,
+                        1.0
+                ));
+            }
+
+            log.info("Successfully fetched {} forecasts from wttr.in fallback", forecasts.size());
+            return forecasts;
+        } catch (Exception e) {
+            log.error("wttr.in fallback also failed", e);
             return List.of();
         }
     }
@@ -110,6 +166,11 @@ public class OpenMeteoClient {
             return list.get(index);
         }
         return null;
+    }
+
+    public List<DailyForecast> getDailyForecastFallback(LocalDate date, Throwable t) {
+        log.warn("Fallback for OpenMeteo: {}", t.getMessage());
+        return List.of();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
