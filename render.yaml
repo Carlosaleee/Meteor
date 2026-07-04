@@ -19,17 +19,19 @@ services:
       - key: SPRING_DATA_REDIS_HOST
         fromService:
           name: ondas-sp-redis
+          type: redis
           property: host
       - key: SPRING_DATA_REDIS_PORT
         fromService:
           name: ondas-sp-redis
+          type: redis
           property: port
       - key: APP_CORS_ORIGINS
         value: "https://ondas-sp.onrender.com,https://ondas-sp-frontend.onrender.com"
-      - key: APP_CORS_ALLOWED-METHODS
-        value: "GET,POST,OPTIONS"
       - key: JAVA_VERSION
         value: 21
+      - key: PORT
+        value: 8080
 
 databases:
   - name: ondas-sp-db
